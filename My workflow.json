@@ -1,0 +1,223 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3632dadc-39ed-436f-b817-bea04fab9765",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\nlet summary = \"Business Data:\\n\";\nfor (const row of rows) {\n  summary += `- ${row.json.Category}: ${row.json.Detail}\\n`;\n}\nreturn [{ json: { prompt: summary } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "47f9f31b-871f-461e-85ac-f1a1f5ddc88b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/YOur_ACCOUNT_SID/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "From",
+              "value": "whatsapp:+YOUR_TWILIO_NUMBER"
+            },
+            {
+              "name": "To",
+              "value": "whatsapp:YOUR_PHONE_NUMBER"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        16
+      ],
+      "id": "357abf0c-f42d-4090-86f5-38f361cbb6db",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "pugVV9hxF2Yl04A1",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IfTZAHEt-NmI31watmGG24w5hFKQ959B4LQsmorBx78",
+          "mode": "list",
+          "cachedResultName": "UniqueEngDepo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IfTZAHEt-NmI31watmGG24w5hFKQ959B4LQsmorBx78/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IfTZAHEt-NmI31watmGG24w5hFKQ959B4LQsmorBx78/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8ef8b16a-12b1-48d6-865f-cc67af9b9d07",
+      "name": "📊 Get Sheet Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "zwbijXfY6OqKIroh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a business assistant for Unique Engineering. Write a short morning briefing in WhatsApp bullet format. Max 150 words.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"test data\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e3e73860-83e9-4dcd-b3e8-7f0fe79d5ac0",
+      "name": "🤖 Groq AI"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst message = response.choices[0].message.content;\nreturn [{ json: { message: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        16
+      ],
+      "id": "26900973-a81b-445a-976e-8bf6b1a06e74",
+      "name": "Summarised Information"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "📊 Get Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "🤖 Groq AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Get Sheet Data": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Groq AI": {
+      "main": [
+        [
+          {
+            "node": "Summarised Information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarised Information": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "453a0baf-3cc7-4896-b707-67a5d51dad32",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "efa1e51bd4283c2dafc386d1097cc5f690c1fd63c9ec662b5be209737097d87c"
+  },
+  "id": "qZZoBsbbGfKVJ1T7",
+  "tags": []
+}
